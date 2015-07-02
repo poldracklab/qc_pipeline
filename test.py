@@ -14,7 +14,7 @@ This is a temporary script file.
 from nipype.pipeline.engine import Workflow, Node, MapNode
 from nipype.interfaces.fsl import MCFLIRT
 
-from variables import data_dir, work_dir, subject_list, plugin
+from variables import data_dir, work_dir, subject_list, plugin, plugin_args
 
 import gc
 import pylab as plt
@@ -111,4 +111,4 @@ test_workflow.connect(file_list, "epi", motion_correct, "in_file")
 test_workflow.connect(motion_correct, "par_file", report_node, "realignment_parameters_file")
 test_workflow.connect(file_list, "epi", report_node, "epi")
 
-test_workflow.run(plugin=plugin)
+test_workflow.run(plugin=plugin, plugin_args=plugin_args)
