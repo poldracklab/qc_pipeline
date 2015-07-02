@@ -11,7 +11,7 @@ This is a temporary script file.
 #
 #print "%s" %(T1) 
 
-from nipype.pipeline.engine import Workflow, Node
+from nipype.pipeline.engine import Workflow, Node, MapNode
 from nipype.interfaces.fsl import MCFLIRT
 
 from variables import data_dir, work_dir, subject_list
@@ -30,10 +30,11 @@ test_workflow.base_dir = work_dir
 
 from nipype import SelectFiles
 templates = dict(T1="*_{subject_id}_*/T1w_MPR_BIC_v1/*00001.nii*", 
-                 epi="*_{subject_id}_*/rfMRI_REST_RL_BIC_v2/*_00001.nii*")
+                 epi="*_{subject_id}_*/rfMRI_REST_{p_dir}_BIC_v2/*_00001.nii*")
 file_list = Node(SelectFiles(templates), name = "EPI_and_T1_File_Selection")
 file_list.inputs.base_directory = data_dir
 file_list.iterables = ("subject_id", subject_list)
+file_list.iterables = ("p_dir", ["LR", "RL"])
 #file_list.id = "6"
 #file_results = sf.run()
 #file_results.outputs
@@ -41,7 +42,7 @@ file_list.iterables = ("subject_id", subject_list)
 
 
 
-motion_correct = Node(MCFLIRT(), name="Motion_Correction")
+motion_correct = MapNode(MCFLIRT(), name="Motion_Correction", iterfield="in_file")
 motion_correct.inputs.output_type = "NIFTI_GZ"
 motion_correct.inputs.save_plots=True
 
@@ -100,9 +101,9 @@ from nipype.interfaces.utility import Function
 #rep_run = report_func_interface.run()
 
 
-report_node = Node(Function(input_names=["epi","realignment_parameters_file","output_file"],
+report_node = MapNode(Function(input_names=["epi","realignment_parameters_file","output_file"],
                             output_names=["report_file"],
-                            function=report_func2), name="QC_Report")
+                            function=report_func2), name="QC_Report", iterfield=["epi", "realignment_parameters_file"])
 #report_node.inputs.epi_nii = nb.load("/Users/craigmoodie/Documents/AA_Connectivity_Psychosis/AA_Connectivity_Analysis/10_Subject_ICA_test/Subject_1/rfMRI_REST_RL_BIC_v2/S1543TWL_P126317_1_8_00001.nii")
 report_node.inputs.output_file = "report.pdf"
 
