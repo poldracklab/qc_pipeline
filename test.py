@@ -14,6 +14,7 @@ This is a temporary script file.
 from nipype.pipeline.engine import Workflow, Node
 from nipype.interfaces.fsl import MCFLIRT
 
+from variables import data_dir, work_dir, subject_list
 
 import gc
 import pylab as plt
@@ -22,16 +23,17 @@ from matplotlib.backends.backend_pdf import PdfPages
 from mriqc.volumes import plot_mosaic, plot_distrbution_of_values
 from mriqc.motion import plot_frame_displacement
 
-test_workflow = Workflow(name="test_workflow")
+test_workflow = Workflow(name="qc_workflow")
 
-test_workflow.base_dir ="/Users/craigmoodie/Documents/AA_Connectivity_Psychosis/AA_Connectivity_Analysis/10_Subject_ICA_test/Subject_1/rfMRI_REST_RL_BIC_v2"
+test_workflow.base_dir = work_dir
 
 
 from nipype import SelectFiles
-templates = dict(T1="Subject_{id}/T1w_MPR_BIC_v1/*00001.nii*",epi="Subject_{id}/rfMRI_REST_RL_BIC_v2/*_00001.nii*")
+templates = dict(T1="*_{subject_id}_*/T1w_MPR_BIC_v1/*00001.nii*", 
+                 epi="*_{subject_id}_*/rfMRI_REST_RL_BIC_v2/*_00001.nii*")
 file_list = Node(SelectFiles(templates), name = "EPI_and_T1_File_Selection")
-file_list.inputs.base_directory = "/Users/craigmoodie/Documents/AA_Connectivity_Psychosis/AA_Connectivity_Analysis/10_Subject_ICA_test/"
-file_list.iterables = ("id",range(1,2))
+file_list.inputs.base_directory = data_dir
+file_list.iterables = ("subject_id", subject_list)
 #file_list.id = "6"
 #file_results = sf.run()
 #file_results.outputs
@@ -40,8 +42,6 @@ file_list.iterables = ("id",range(1,2))
 
 
 motion_correct = Node(MCFLIRT(), name="Motion_Correction")
-motion_correct.inputs.in_file = "/Users/craigmoodie/Documents/AA_Connectivity_Psychosis/AA_Connectivity_Analysis/10_Subject_ICA_test/Subject_1/rfMRI_REST_RL_BIC_v2/S1543TWL_P126317_1_8_00001.nii"
-#motion_correct.inputs.reference = "/Applications/fsl/fsl/data/standard/MNI152_T1_2mm_brain_mask.nii.gz"
 motion_correct.inputs.output_type = "NIFTI_GZ"
 motion_correct.inputs.save_plots=True
 
@@ -88,9 +88,6 @@ def report_func2(epi,realignment_parameters_file,output_file):
     plt.close()
     return os.path.abspath(output_file)
     
-def report_func(epi_nii,realignment_parameters_file,output_file):
-    print "boo"
-    return output_file
 
 #return report
 
@@ -105,7 +102,7 @@ from nipype.interfaces.utility import Function
 
 report_node = Node(Function(input_names=["epi","realignment_parameters_file","output_file"],
                             output_names=["report_file"],
-                            function=report_func2), name="Nipype_Report")
+                            function=report_func2), name="QC_Report")
 #report_node.inputs.epi_nii = nb.load("/Users/craigmoodie/Documents/AA_Connectivity_Psychosis/AA_Connectivity_Analysis/10_Subject_ICA_test/Subject_1/rfMRI_REST_RL_BIC_v2/S1543TWL_P126317_1_8_00001.nii")
 report_node.inputs.output_file = "report.pdf"
 
