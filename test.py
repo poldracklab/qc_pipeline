@@ -29,7 +29,7 @@ test_workflow.base_dir = work_dir
 
 
 from nipype import SelectFiles
-templates = dict(T1="*_{subject_id}_*/T1w_MPR_BIC_v1/*00001.nii*", 
+templates = dict(#T1="*_{subject_id}_*/T1w_MPR_BIC_v1/*00001.nii*", 
                  epi="*_{subject_id}_*/rfMRI_REST_{p_dir}_BIC_v2/*_00001.nii*")
 file_list = Node(SelectFiles(templates), name = "EPI_and_T1_File_Selection")
 file_list.inputs.base_directory = data_dir
